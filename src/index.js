@@ -1,10 +1,13 @@
-import proccess from 'process'
+import process from 'node:process';
 import {getUsernameFromArgs} from './utils/index.js'
+import {EventsModule} from "./modules/events.module.js";
 
 class App {
     constructor() {
         this.userName = getUsernameFromArgs()
-        this.handleExit()
+        this.eventHandler = new EventsModule(this.userName)
+
+        this.eventHandler.setUpListeners()
     }
 
     welcomeUser() {
@@ -13,13 +16,7 @@ class App {
     }
 
     _sendMessageToConsole(message) {
-        proccess.stdout.write(message + '\n')
-    }
-
-    handleExit() {
-        proccess.on('exit',()=>{
-           console.log('exit')
-       })
+        process.stdout.write(message + '\n')
     }
 }
 
