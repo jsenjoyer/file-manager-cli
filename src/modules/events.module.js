@@ -1,6 +1,35 @@
 import process from "node:process";
 import {MessagesService} from "./messages.service.js";
 
+const COMMANDS = {
+    cd: () => {
+    },
+    up: () => {
+    },
+    ls: () => {
+    },
+    cat: () => {
+    },
+    add: () => {
+    },
+    rn: () => {
+    },
+    cp: () => {
+    },
+    mv: () => {
+    },
+    rm: () => {
+    },
+    os: () => {
+    },
+    hash: () => {
+    },
+    compress: () => {
+    },
+    decompress: () => {
+    }
+}
+
 export class EventsModule {
     constructor(userName) {
         this.userName = userName
@@ -14,7 +43,12 @@ export class EventsModule {
 
     _handleIncomingMessages() {
         process.stdin.on('data', (data) => {
-            console.log('data')
+            const command = data.toString().trim().split(' ')[0]
+            try {
+                COMMANDS[command](data)
+            } catch (e) {
+                this.messageService.sendMessage('Invalid input')
+            }
         })
     }
 
