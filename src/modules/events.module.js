@@ -50,6 +50,7 @@ const COMMANDS = {
           //test
           //test
           //test
+          //test
           return a.name.localeCompare(b.name);
         }
       });
