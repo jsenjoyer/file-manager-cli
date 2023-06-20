@@ -49,6 +49,7 @@ const COMMANDS = {
         } else {
           //test
           //test
+          //test
           return a.name.localeCompare(b.name);
         }
       });
