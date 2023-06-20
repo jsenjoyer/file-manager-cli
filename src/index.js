@@ -9,13 +9,12 @@ class App {
         this.userName = getUsernameFromArgs()
         this.eventHandler = new EventsModule(this.userName)
         this.messageService = new MessagesService()
-
-        this.eventHandler.setUpListeners()
     }
 
     appInit() {
         this._setInitialPath()
         this._welcomeUser()
+        this.eventHandler.setUpListeners()
     }
 
     _welcomeUser() {
