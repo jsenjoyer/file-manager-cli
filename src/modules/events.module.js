@@ -47,10 +47,6 @@ const COMMANDS = {
         } else if (a.type === "File" && b.type === "Directory") {
           return 1;
         } else {
-          //test
-          //test
-          //test
-          //test
           return a.name.localeCompare(b.name);
         }
       });
