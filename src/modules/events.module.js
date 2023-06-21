@@ -4,7 +4,7 @@ import readline from "readline";
 import path from "path";
 import os from "os";
 import fs from "fs/promises";
-import { createReadStream } from "fs";
+import { createReadStream, createWriteStream } from "fs";
 import { sortFiles } from "../utils/index.js";
 
 const COMMANDS = {
@@ -87,7 +87,27 @@ const COMMANDS = {
       console.log("Operation failed");
     }
   },
-  cp: () => {},
+  //@Todo check cp functionality
+  cp: (args) => {
+    const [pathToOldFile, pathToNewDirectory] = args;
+    if (!pathToOldFile || !pathToNewDirectory) {
+      console.log("Invalid input");
+      return;
+    }
+
+    const fileName = path.basename(pathToOldFile);
+    const readStream = createReadStream(pathToOldFile);
+    const writeStream = createWriteStream(
+      path.join(pathToNewDirectory, fileName)
+    );
+    readStream.pipe(writeStream);
+    readStream.on("error", () => {
+      console.log("Operation failed");
+    });
+    writeStream.on("error", () => {
+      console.log("Operation failed");
+    });
+  },
   mv: () => {},
   rm: () => {},
   os: () => {},
