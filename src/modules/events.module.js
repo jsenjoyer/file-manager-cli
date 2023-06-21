@@ -57,7 +57,19 @@ const COMMANDS = {
       console.log("Operation failed");
     });
   },
-  add: () => {},
+  add: async (args) => {
+    const fileName = args[0];
+    if (!fileName) {
+      console.log("Invalid input");
+      return;
+    }
+
+    try {
+      await fs.writeFile(fileName, "", { flag: "wx" });
+    } catch (e) {
+      console.log("Operation failed");
+    }
+  },
   rn: () => {},
   cp: () => {},
   mv: () => {},
