@@ -108,7 +108,29 @@ const COMMANDS = {
       console.log("Operation failed");
     });
   },
-  mv: () => {},
+  mv: (args) => {
+    //@Todo check mv functionality fully
+    const [pathToOldFile, pathToNewDirectory] = args;
+    if (!pathToOldFile || !pathToNewDirectory) {
+      console.log("Invalid input");
+      return;
+    }
+    const fileName = path.basename(pathToOldFile);
+    const readStream = createReadStream(pathToOldFile);
+    const writeStream = createWriteStream(
+      path.join(pathToNewDirectory, fileName)
+    );
+    readStream.pipe(writeStream);
+    readStream.on("error", () => {
+      console.log("Operation failed");
+    });
+    writeStream.on("error", () => {
+      console.log("Operation failed");
+    });
+    writeStream.on("close", async () => {
+      await fs.rm(pathToOldFile);
+    });
+  },
   rm: () => {},
   os: () => {},
   hash: () => {},
