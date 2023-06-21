@@ -70,7 +70,23 @@ const COMMANDS = {
       console.log("Operation failed");
     }
   },
-  rn: () => {},
+  rn: async (args) => {
+    const [pathToOldFile, newFileName] = args;
+
+    if (!pathToOldFile || !newFileName) {
+      console.log("Invalid input");
+      return;
+    }
+
+    const pathToDir = path.dirname(pathToOldFile);
+    const newFilePath = path.join(pathToDir, newFileName);
+
+    try {
+      await fs.rename(pathToOldFile, newFilePath);
+    } catch (e) {
+      console.log("Operation failed");
+    }
+  },
   cp: () => {},
   mv: () => {},
   rm: () => {},
