@@ -131,7 +131,18 @@ const COMMANDS = {
       await fs.rm(pathToOldFile);
     });
   },
-  rm: () => {},
+  rm: async (args) => {
+    const [pathToFile] = args;
+    if (!pathToFile) {
+      console.log("Invalid input");
+      return;
+    }
+    try {
+      await fs.rm(pathToFile);
+    } catch (e) {
+      console.log("Operation failed");
+    }
+  },
   os: () => {},
   hash: () => {},
   compress: () => {},
