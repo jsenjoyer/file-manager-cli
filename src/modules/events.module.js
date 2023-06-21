@@ -4,6 +4,7 @@ import readline from "readline";
 import path from "path";
 import os from "os";
 import fs from "fs/promises";
+import { sortFiles } from "../utils/index.js";
 
 const COMMANDS = {
   cd: (args) => {
@@ -34,23 +35,8 @@ const COMMANDS = {
   ls: async () => {
     try {
       const files = await fs.readdir(process.cwd(), { withFileTypes: true });
-      const mappedFiles = files.map((file) => {
-        const fileType = file.isDirectory() ? "Directory" : "File";
-        return {
-          name: file.name,
-          type: fileType,
-        };
-      });
-      const sorted = mappedFiles.sort((a, b) => {
-        if (a.type === "Directory" && b.type === "File") {
-          return -1;
-        } else if (a.type === "File" && b.type === "Directory") {
-          return 1;
-        } else {
-          return a.name.localeCompare(b.name);
-        }
-      });
-      console.table(sorted);
+      const sortedFiles = sortFiles(files);
+      console.table(sortedFiles, ["name", "type"]);
     } catch (e) {}
   },
   cat: () => {},

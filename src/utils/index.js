@@ -6,3 +6,23 @@ export const getUsernameFromArgs = () => {
   }
   throw new Error("You should pass username as argument");
 };
+
+export const sortFiles = (files) => {
+  return files
+    .map((file) => {
+      const fileType = file.isDirectory() ? "Directory" : "File";
+      return {
+        name: file.name,
+        type: fileType,
+      };
+    })
+    .sort((a, b) => {
+      if (a.type === "Directory" && b.type === "File") {
+        return -1;
+      } else if (a.type === "File" && b.type === "Directory") {
+        return 1;
+      } else {
+        return a.name.localeCompare(b.name);
+      }
+    });
+};
