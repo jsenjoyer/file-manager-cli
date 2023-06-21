@@ -4,6 +4,7 @@ import readline from "readline";
 import path from "path";
 import os from "os";
 import fs from "fs/promises";
+import { createReadStream } from "fs";
 import { sortFiles } from "../utils/index.js";
 
 const COMMANDS = {
@@ -12,7 +13,7 @@ const COMMANDS = {
     try {
       process.chdir(newPath);
     } catch (e) {
-      console.log("Invalid path");
+      console.log("Invalid input");
     }
   },
   //@Todo add handlers to prevent user from going outside of the root directory
@@ -39,7 +40,23 @@ const COMMANDS = {
       console.table(sortedFiles, ["name", "type"]);
     } catch (e) {}
   },
-  cat: () => {},
+  cat: async (args) => {
+    let pathToFile;
+    try {
+      pathToFile = args[0];
+    } catch (e) {
+      console.log("Invalid input");
+    }
+
+    const readStream = createReadStream(pathToFile);
+
+    readStream.on("data", (chunk) => {
+      console.log(chunk.toString());
+    });
+    readStream.on("error", () => {
+      console.log("Operation failed");
+    });
+  },
   add: () => {},
   rn: () => {},
   cp: () => {},
@@ -66,10 +83,10 @@ export class EventsModule {
   }
 
   _handleIncomingMessages() {
-    this.rl.on("line", (inputString) => {
+    this.rl.on("line", async (inputString) => {
       const [userCommand, ...args] = inputString.trim().split(" ");
       try {
-        COMMANDS[userCommand](args);
+        await COMMANDS[userCommand](args);
         this.messageService.sendMessage(
           `You are currently in ${process.cwd()}`
         );
