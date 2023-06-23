@@ -7,6 +7,7 @@ import fs from "fs/promises";
 import { createReadStream, createWriteStream } from "fs";
 import { sortFiles } from "../utils/index.js";
 import { createHash } from "crypto";
+import zlib from "zlib";
 
 const COMMANDS = {
   cd: (args) => {
@@ -211,8 +212,61 @@ const COMMANDS = {
       console.log("Operation failed");
     }
   },
-  compress: () => {},
-  decompress: () => {},
+  //@Todo check compress functionality
+  compress: (args) => {
+    const [pathToFile, pathToDestination] = args;
+    console.log(pathToFile, pathToDestination, args);
+    if (!pathToFile || !pathToDestination) {
+      console.log("Invalid input");
+      return;
+    }
+    const readStream = createReadStream(pathToFile);
+    const compressStream = zlib.createBrotliCompress();
+    const fileName = path.basename(pathToFile);
+    console.log(path.join(pathToDestination, fileName, ".br"));
+    const writeStream = createWriteStream(
+      path.join(pathToDestination, `${fileName}.br`)
+    );
+    console.log(fileName);
+
+    readStream.pipe(compressStream).pipe(writeStream);
+    readStream.on("error", () => {
+      console.log("read");
+      console.log("Operation failed");
+    });
+    writeStream.on("error", () => {
+      console.log("write");
+      console.log("Operation failed");
+    });
+    compressStream.on("error", () => {
+      console.log("compress");
+      console.log("Operation failed");
+    });
+  },
+  //@Todo check decompress functionality
+  decompress: (args) => {
+    const [pathToFile, pathToDestination] = args;
+    if (!pathToFile || !pathToDestination) {
+      console.log("Invalid input");
+      return;
+    }
+    const readStream = createReadStream(pathToFile);
+    const decompressStream = zlib.createBrotliDecompress();
+    const writeStream = createWriteStream(pathToDestination);
+    readStream.pipe(decompressStream).pipe(writeStream);
+    readStream.on("error", () => {
+      console.log("read");
+      console.log("Operation failed");
+    });
+    writeStream.on("error", () => {
+      console.log("write");
+      console.log("Operation failed");
+    });
+    decompressStream.on("error", () => {
+      console.log("compress");
+      console.log("Operation failed");
+    });
+  },
 };
 
 export class EventsModule {
