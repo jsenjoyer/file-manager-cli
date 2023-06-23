@@ -3,8 +3,6 @@ import { getUsernameFromArgs } from "./utils/index.js";
 import { EventsModule } from "./modules/events.module.js";
 import { MessagesService } from "./modules/messages.service.js";
 import os from "os";
-//test
-//test2
 class App {
   constructor() {
     this.userName = getUsernameFromArgs();

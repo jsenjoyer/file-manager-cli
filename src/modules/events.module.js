@@ -4,6 +4,8 @@ import readline from "readline";
 import path from "path";
 import os from "os";
 import fs from "fs/promises";
+import { createReadStream, createWriteStream } from "fs";
+import { sortFiles } from "../utils/index.js";
 
 const COMMANDS = {
   cd: (args) => {
@@ -11,7 +13,7 @@ const COMMANDS = {
     try {
       process.chdir(newPath);
     } catch (e) {
-      console.log("Invalid path");
+      console.log("Invalid input");
     }
   },
   //@Todo add handlers to prevent user from going outside of the root directory
@@ -34,36 +36,165 @@ const COMMANDS = {
   ls: async () => {
     try {
       const files = await fs.readdir(process.cwd(), { withFileTypes: true });
-      const mappedFiles = files.map((file) => {
-        const fileType = file.isDirectory() ? "Directory" : "File";
-        return {
-          name: file.name,
-          type: fileType,
-        };
-      });
-      const sorted = mappedFiles.sort((a, b) => {
-        if (a.type === "Directory" && b.type === "File") {
-          return -1;
-        } else if (a.type === "File" && b.type === "Directory") {
-          return 1;
-        } else {
-          //test
-          //test
-          //test
-          //test
-          return a.name.localeCompare(b.name);
-        }
-      });
-      console.table(sorted);
+      const sortedFiles = sortFiles(files);
+      console.table(sortedFiles, ["name", "type"]);
     } catch (e) {}
   },
-  cat: () => {},
-  add: () => {},
-  rn: () => {},
-  cp: () => {},
-  mv: () => {},
-  rm: () => {},
-  os: () => {},
+  cat: async (args) => {
+    let pathToFile;
+    try {
+      pathToFile = args[0];
+    } catch (e) {
+      console.log("Invalid input");
+    }
+
+    const readStream = createReadStream(pathToFile);
+
+    readStream.on("data", (chunk) => {
+      console.log(chunk.toString());
+    });
+    readStream.on("error", () => {
+      console.log("Operation failed");
+    });
+  },
+  add: async (args) => {
+    const fileName = args[0];
+    if (!fileName) {
+      console.log("Invalid input");
+      return;
+    }
+
+    try {
+      await fs.writeFile(fileName, "", { flag: "wx" });
+    } catch (e) {
+      console.log("Operation failed");
+    }
+  },
+  rn: async (args) => {
+    const [pathToOldFile, newFileName] = args;
+
+    if (!pathToOldFile || !newFileName) {
+      console.log("Invalid input");
+      return;
+    }
+
+    const pathToDir = path.dirname(pathToOldFile);
+    const newFilePath = path.join(pathToDir, newFileName);
+
+    try {
+      await fs.rename(pathToOldFile, newFilePath);
+    } catch (e) {
+      console.log("Operation failed");
+    }
+  },
+  //@Todo check cp functionality
+  cp: (args) => {
+    const [pathToOldFile, pathToNewDirectory] = args;
+    if (!pathToOldFile || !pathToNewDirectory) {
+      console.log("Invalid input");
+      return;
+    }
+
+    const fileName = path.basename(pathToOldFile);
+    const readStream = createReadStream(pathToOldFile);
+    const writeStream = createWriteStream(
+      path.join(pathToNewDirectory, fileName)
+    );
+    readStream.pipe(writeStream);
+    readStream.on("error", () => {
+      console.log("Operation failed");
+    });
+    writeStream.on("error", () => {
+      console.log("Operation failed");
+    });
+  },
+  mv: (args) => {
+    //@Todo check mv functionality fully
+    const [pathToOldFile, pathToNewDirectory] = args;
+    if (!pathToOldFile || !pathToNewDirectory) {
+      console.log("Invalid input");
+      return;
+    }
+    const fileName = path.basename(pathToOldFile);
+    const readStream = createReadStream(pathToOldFile);
+    const writeStream = createWriteStream(
+      path.join(pathToNewDirectory, fileName)
+    );
+    readStream.pipe(writeStream);
+    readStream.on("error", () => {
+      console.log("Operation failed");
+    });
+    writeStream.on("error", () => {
+      console.log("Operation failed");
+    });
+    writeStream.on("close", async () => {
+      await fs.rm(pathToOldFile);
+    });
+  },
+  rm: async (args) => {
+    const [pathToFile] = args;
+    if (!pathToFile) {
+      console.log("Invalid input");
+      return;
+    }
+    try {
+      await fs.rm(pathToFile);
+    } catch (e) {
+      console.log("Operation failed");
+    }
+  },
+  os: (args) => {
+    const osArgs = {
+      "--EOL": () => {
+        const eol = JSON.stringify(os.EOL);
+        const msg = `Current EOL: ${eol}`;
+
+        console.log(msg);
+      },
+      "--cpus": () => {
+        const cpus = os.cpus();
+        const cpusCount = cpus.length;
+        const msg = `Count of CPUs: ${cpusCount}`;
+
+        console.log(msg);
+
+        cpus.forEach((cpu, index) => {
+          const cpuModel = cpu.model;
+          const cpuSpeed = cpu.speed / 1000;
+          const msg = `CPU:${++index}, CPU model: ${cpuModel}, CPU speed: ${cpuSpeed} GHz`;
+          console.log(msg);
+        });
+      },
+      "--homedir": () => {
+        const homeDir = os.homedir();
+        const msg = `Current home directory: ${homeDir}`;
+
+        console.log(msg);
+      },
+      "--username": () => {
+        const userName = os.userInfo().username;
+        const msg = `Current user name: ${userName}`;
+
+        console.log(msg);
+      },
+      "--architecture": () => {
+        const arch = os.arch();
+        const msg = `Current architecture: ${arch}`;
+
+        console.log(msg);
+      },
+    };
+    const [currentArg] = args;
+    if (!currentArg) {
+      console.log("Invalid input");
+      return;
+    }
+    try {
+      osArgs[currentArg]();
+    } catch (e) {
+      console.log("Operation failed");
+    }
+  },
   hash: () => {},
   compress: () => {},
   decompress: () => {},
@@ -84,10 +215,10 @@ export class EventsModule {
   }
 
   _handleIncomingMessages() {
-    this.rl.on("line", (inputString) => {
+    this.rl.on("line", async (inputString) => {
       const [userCommand, ...args] = inputString.trim().split(" ");
       try {
-        COMMANDS[userCommand](args);
+        await COMMANDS[userCommand](args);
         this.messageService.sendMessage(
           `You are currently in ${process.cwd()}`
         );
