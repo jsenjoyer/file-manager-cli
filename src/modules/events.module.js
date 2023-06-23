@@ -6,6 +6,7 @@ import os from "os";
 import fs from "fs/promises";
 import { createReadStream, createWriteStream } from "fs";
 import { sortFiles } from "../utils/index.js";
+import { createHash } from "crypto";
 
 const COMMANDS = {
   cd: (args) => {
@@ -195,7 +196,21 @@ const COMMANDS = {
       console.log("Operation failed");
     }
   },
-  hash: () => {},
+  hash: async (args) => {
+    const [pathToFile] = args;
+    if (!pathToFile) {
+      console.log("Invalid input");
+      return;
+    }
+    try {
+      const fileData = await fs.readFile(pathToFile);
+      const hash = createHash("sha256").update(fileData).digest("hex");
+      const msg = `Hash of file ${pathToFile} is ${hash}`;
+      console.log(msg);
+    } catch (e) {
+      console.log("Operation failed");
+    }
+  },
   compress: () => {},
   decompress: () => {},
 };
