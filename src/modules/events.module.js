@@ -143,7 +143,58 @@ const COMMANDS = {
       console.log("Operation failed");
     }
   },
-  os: () => {},
+  os: (args) => {
+    const osArgs = {
+      "--EOL": () => {
+        const eol = JSON.stringify(os.EOL);
+        const msg = `Current EOL: ${eol}`;
+
+        console.log(msg);
+      },
+      "--cpus": () => {
+        const cpus = os.cpus();
+        const cpusCount = cpus.length;
+        const msg = `Count of CPUs: ${cpusCount}`;
+
+        console.log(msg);
+
+        cpus.forEach((cpu, index) => {
+          const cpuModel = cpu.model;
+          const cpuSpeed = cpu.speed / 1000;
+          const msg = `CPU:${++index}, CPU model: ${cpuModel}, CPU speed: ${cpuSpeed} GHz`;
+          console.log(msg);
+        });
+      },
+      "--homedir": () => {
+        const homeDir = os.homedir();
+        const msg = `Current home directory: ${homeDir}`;
+
+        console.log(msg);
+      },
+      "--username": () => {
+        const userName = os.userInfo().username;
+        const msg = `Current user name: ${userName}`;
+
+        console.log(msg);
+      },
+      "--architecture": () => {
+        const arch = os.arch();
+        const msg = `Current architecture: ${arch}`;
+
+        console.log(msg);
+      },
+    };
+    const [currentArg] = args;
+    if (!currentArg) {
+      console.log("Invalid input");
+      return;
+    }
+    try {
+      osArgs[currentArg]();
+    } catch (e) {
+      console.log("Operation failed");
+    }
+  },
   hash: () => {},
   compress: () => {},
   decompress: () => {},
