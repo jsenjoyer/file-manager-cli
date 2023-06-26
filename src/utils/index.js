@@ -4,7 +4,7 @@ export const getUsernameFromArgs = () => {
   if (userNameStr) {
     return userNameStr.split("=")[1];
   }
-  throw new Error("You should pass username as argument");
+  return "Anonimus";
 };
 
 export const sortFiles = (files) => {

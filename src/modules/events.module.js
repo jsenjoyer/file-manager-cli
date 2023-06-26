@@ -1,24 +1,29 @@
 import process from "node:process";
-import { MessagesService } from "./messages.service.js";
 import readline from "readline";
 import path from "path";
 import os from "os";
 import fs from "fs/promises";
 import { createReadStream, createWriteStream } from "fs";
 import { sortFiles } from "../utils/index.js";
+import { createHash } from "crypto";
+import zlib from "zlib";
 
 const COMMANDS = {
   cd: (args) => {
     const [newPath] = args;
+    const currentDirectory = process.cwd();
+    const newDirectory = path.resolve(currentDirectory, "..");
+
+    if (!newDirectory.startsWith(os.homedir())) {
+      console.log("You can't go outside of the root directory");
+      return;
+    }
     try {
       process.chdir(newPath);
     } catch (e) {
       console.log("Invalid input");
     }
   },
-  //@Todo add handlers to prevent user from going outside of the root directory
-  //@Todo change /n to os.EOL
-  //@Todo чекнуть какую ошибку выдавать после невозможности использования  up()
   up: () => {
     try {
       const currentDirectory = process.cwd();
@@ -26,6 +31,7 @@ const COMMANDS = {
 
       if (!newDirectory.startsWith(os.homedir())) {
         console.log("You can't go outside of the root directory");
+        return;
       }
 
       process.chdir("..");
@@ -109,7 +115,6 @@ const COMMANDS = {
     });
   },
   mv: (args) => {
-    //@Todo check mv functionality fully
     const [pathToOldFile, pathToNewDirectory] = args;
     if (!pathToOldFile || !pathToNewDirectory) {
       console.log("Invalid input");
@@ -195,15 +200,80 @@ const COMMANDS = {
       console.log("Operation failed");
     }
   },
-  hash: () => {},
-  compress: () => {},
-  decompress: () => {},
+  hash: async (args) => {
+    const [pathToFile] = args;
+    if (!pathToFile) {
+      console.log("Invalid input");
+      return;
+    }
+    try {
+      const fileData = await fs.readFile(pathToFile);
+      const hash = createHash("sha256").update(fileData).digest("hex");
+      const msg = `Hash of file ${pathToFile} is ${hash}`;
+      console.log(msg);
+    } catch (e) {
+      console.log("Operation failed");
+    }
+  },
+  compress: (args) => {
+    const [pathToFile, pathToDestination] = args;
+    console.log(pathToFile, pathToDestination, args);
+    if (!pathToFile || !pathToDestination) {
+      console.log("Invalid input");
+      return;
+    }
+    const readStream = createReadStream(pathToFile);
+    const compressStream = zlib.createBrotliCompress();
+    const fileName = path.basename(pathToFile);
+    console.log(path.join(pathToDestination, fileName, ".br"));
+    const writeStream = createWriteStream(
+      path.join(pathToDestination, `${fileName}.br`)
+    );
+    console.log(fileName);
+
+    readStream.pipe(compressStream).pipe(writeStream);
+    readStream.on("error", () => {
+      console.log("read");
+      console.log("Operation failed");
+    });
+    writeStream.on("error", () => {
+      console.log("write");
+      console.log("Operation failed");
+    });
+    compressStream.on("error", () => {
+      console.log("compress");
+      console.log("Operation failed");
+    });
+  },
+  //@Todo check decompress functionality
+  decompress: (args) => {
+    const [pathToFile, pathToDestination] = args;
+    if (!pathToFile || !pathToDestination) {
+      console.log("Invalid input");
+      return;
+    }
+    const readStream = createReadStream(pathToFile);
+    const decompressStream = zlib.createBrotliDecompress();
+    const writeStream = createWriteStream(pathToDestination);
+    readStream.pipe(decompressStream).pipe(writeStream);
+    readStream.on("error", () => {
+      console.log("read");
+      console.log("Operation failed");
+    });
+    writeStream.on("error", () => {
+      console.log("write");
+      console.log("Operation failed");
+    });
+    decompressStream.on("error", () => {
+      console.log("compress");
+      console.log("Operation failed");
+    });
+  },
 };
 
 export class EventsModule {
   constructor(userName) {
     this.userName = userName;
-    this.messageService = new MessagesService();
     this.rl = readline.createInterface({
       input: process.stdin,
     });
@@ -219,11 +289,11 @@ export class EventsModule {
       const [userCommand, ...args] = inputString.trim().split(" ");
       try {
         await COMMANDS[userCommand](args);
-        this.messageService.sendMessage(
-          `You are currently in ${process.cwd()}`
-        );
+        const msg = `You are currently in ${process.cwd()}`;
+
+        console.log(msg);
       } catch (e) {
-        this.messageService.sendMessage("Invalid input");
+        console.log("Invalid input");
       }
     });
   }
@@ -231,7 +301,7 @@ export class EventsModule {
   _handleExit() {
     const byeMessage = `\nThank you for using File Manager, ${this.userName}, goodbye!`;
     process.on("SIGINT", () => {
-      this.messageService.sendMessage(byeMessage);
+      console.log(byeMessage);
       process.exit(0);
     });
   }
