@@ -24,9 +24,6 @@ const COMMANDS = {
       console.log("Invalid input");
     }
   },
-  //@Todo add handlers to prevent user from going outside of the root directory
-  //@Todo change /n to os.EOL
-  //@Todo чекнуть какую ошибку выдавать после невозможности использования  up()
   up: () => {
     try {
       const currentDirectory = process.cwd();
@@ -118,7 +115,6 @@ const COMMANDS = {
     });
   },
   mv: (args) => {
-    //@Todo check mv functionality fully
     const [pathToOldFile, pathToNewDirectory] = args;
     if (!pathToOldFile || !pathToNewDirectory) {
       console.log("Invalid input");
@@ -219,7 +215,6 @@ const COMMANDS = {
       console.log("Operation failed");
     }
   },
-  //@Todo check compress functionality
   compress: (args) => {
     const [pathToFile, pathToDestination] = args;
     console.log(pathToFile, pathToDestination, args);
